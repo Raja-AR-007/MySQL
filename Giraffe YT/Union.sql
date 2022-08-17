@@ -1,0 +1,175 @@
+                                          -- employee
+                                          
+CREATE TABLE employee(
+	emp_id INT PRIMARY KEY,
+    first_name VARCHAR(20),
+    last_name VARCHAR(20),
+    birth_date DATE,
+    sex VARCHAR(1),
+    salary INT,
+    super_id INT, 
+    branch_id INT
+);   
+
+INSERT INTO employee VALUES(100, 'David', 'Wallace', '1967-11-17', 'M', 250000, NULL, NULL);
+update employee
+set branch_id=1
+where emp_id=100;
+INSERT INTO employee VALUES(101, 'Jan', 'Levinston', '1961-05-11', 'F', 110000, 100, 1);
+INSERT INTO employee VALUES(102, 'Michel', 'Scott', '1964-03-15', 'M', 75000, 100, NULL);
+update employee
+set branch_id=2
+where emp_id=102;
+INSERT INTO employee VALUES(103, 'Angela', 'Martin', '1971-06-25', 'F', 63000, 102, 2);
+INSERT INTO employee VALUES(104, 'Kaviya', 'Kumar', '1980-02-05', 'F', 51000, 102, 2);
+INSERT INTO employee VALUES(105, 'Prem', 'Kumar', '1958-03-15', 'M', 55000, 102, 2);
+INSERT INTO employee VALUES(106, 'Raja', 'Raj', '1952-05-18', 'M', 85000, 100, NULL);
+UPDATE employee
+SET branch_id=3
+WHERE emp_id=106;
+INSERT INTO employee VALUES(107, 'Muthu', 'Vel', '1996-04-15', 'M', 85000, 106, 3);
+INSERT INTO employee VALUES(108, 'Yoga', 'Raj', '1998-06-14', 'M', 85000, 106, 3);
+
+SELECT * FROM employee;
+DROP TABLE employee;
+                                       -- branch
+                                       
+CREATE TABLE branch(
+	branch_id INT PRIMARY KEY,
+    branch_name VARCHAR(20),
+    mgr_id INT,
+    mgr_start_date DATE,
+    FOREIGN KEY(mgr_id) REFERENCES employee(emp_id) ON DELETE SET NULL
+);
+
+INSERT INTO branch VALUE(1, 'Corporate', 100, '2006-02-09');
+INSERT INTO branch VALUE(2, 'Scranton', 102, '1992-04-06');
+INSERT INTO branch VALUE(3, 'Stamford', 106, '1995-06-08');
+
+SELECT * FROM branch;
+DROP TABLE branch;
+
+ALTER TABLE employee 
+ADD FOREIGN KEY (branch_id) REFERENCES branch(branch_id) ON DELETE SET NULL;
+
+ALTER TABLE employee 
+ADD FOREIGN KEY(super_id) REFERENCES employee(emp_id) ON DELETE SET NULL;
+										
+                                        -- client
+                                        
+CREATE TABLE client(
+	client_id  INT PRIMARY KEY,
+    client_name VARCHAR(40),
+    branch_id INT,
+    FOREIGN KEY(branch_id) REFERENCES branch(branch_id) ON DELETE SET NULL
+);
+
+INSERT INTO client VALUES(400, 'Dunmore Highschool', 2);
+INSERT INTO client VALUES(401, 'Lackawana Country', 2);
+INSERT INTO client VALUES(402, 'FedEx', 3);
+INSERT INTO client VALUES(403, 'John Daly Law, LLC', 3);
+INSERT INTO client VALUES(404, 'Scranton Whitepages', 2);
+INSERT INTO client VALUES(405, 'Times Newspaper', 3);
+INSERT INTO client VALUES(406, 'FedEx', 2);
+
+SELECT * FROM client;
+DROP TABLE client;
+                                   
+                                   -- works_with
+                                   
+CREATE TABLE works_with(
+	emp_id INT,
+    client_id INT,
+    total_sales INT,
+    PRIMARY KEY(emp_id, client_id),
+    FOREIGN KEY(emp_id) REFERENCES employee(emp_id) ON DELETE CASCADE,
+    FOREIGN KEY(client_id) REFERENCES client(client_id) ON DELETE CASCADE 
+);
+
+INSERT INTO works_with VALUES(105, 400, 55000); 
+INSERT INTO works_with VALUES(102, 401, 267000); 
+INSERT INTO works_with VALUES(108, 402, 22500);
+INSERT INTO works_with VALUES(107, 403, 5000); 
+INSERT INTO works_with VALUES(108, 403, 12000); 
+INSERT INTO works_with VALUES(105, 404, 33000); 
+INSERT INTO works_with VALUES(107, 405, 26000); 
+INSERT INTO works_with VALUES(102, 406, 15000); 
+INSERT INTO works_with VALUES(105, 406, 130000); 
+
+SELECT * FROM works_with;
+DROP TABLE works_with;
+							     
+                                 -- branch_supplier
+                                 
+CREATE TABLE branch_supplier(
+	branch_id INT,
+    supplier_name VARCHAR(40),
+    supply_type VARCHAR(40),
+    PRIMARY KEY(branch_id, supplier_name), 
+    FOREIGN KEY(branch_id) REFERENCES branch(branch_id) ON DELETE CASCADE
+);
+
+INSERT INTO branch_supplier VALUES(2,'Hammer Mill', 'Paper');
+INSERT INTO branch_supplier VALUES(2,'Uni-ball', 'Writing Utensils');
+INSERT INTO branch_supplier VALUES(3,'Patriot Paper', 'Paper');
+INSERT INTO branch_supplier VALUES(2,'J.T Forms & Labels', 'Custom Froms');
+INSERT INTO branch_supplier VALUES(3,'Uni-ball', 'Writing Utensils');
+INSERT INTO branch_supplier VALUES(3,'Hammer Mill', 'Paper');
+INSERT INTO branch_supplier VALUES(3,'Stamford Labels', 'Custom Forms');
+
+SELECT * FROM branch_supplier;
+DROP TABLE branch_supplier;
+
+                                       -- UNION
+-- UNION is used to combine multiple columns from different tables.
+-- combining all data into a single place.
+
+-- Find a list of employees and branch names
+SELECT first_name
+FROM employee
+UNION
+SELECT branch_name
+FROM branch
+UNION
+SELECT client_name
+FROM client;
+
+  -- AS keyword
+SELECT first_name AS company_names
+FROM employee
+UNION
+SELECT branch_name
+FROM branch
+UNION
+SELECT client_name
+FROM client;
+
+-- Find out a list of all clients & branch suppliers' names
+-- AS keyword
+SELECT client_name AS client_name_and_supplier_name
+FROM client
+UNION
+SELECT supplier_name
+FROM branch_supplier;
+
+-- we can also combine a foreign key which is branch_id
+SELECT client_name, branch_id
+FROM client
+UNION
+SELECT supplier_name, branch_id
+FROM branch_supplier;
+
+-- it will be easy to readable
+SELECT client_name, clien.branch_id
+FROM client
+UNION
+SELECT supplier_name, branch_supplier.branch_id
+FROM branch_supplier;
+
+-- Find a list fo all money spent or earned by a company
+-- AS keyword
+SELECT salary AS salary_and_total_sales
+FROM employee
+UNION 
+SELECT total_sales
+FROM works_with;
